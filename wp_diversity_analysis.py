@@ -380,5 +380,24 @@ print(data.groupby('is_male')['salary'].mean())
 #avg salary males vs females by dept
 print(data.groupby(['dept','is_male'])['salary'].agg({'mean', 'count'}))
 
+#                      count           mean
+# dept        is_male
+# HR          0         1058   84399.810964
+#             1          636   84827.044025
+# engineering 0          671  246785.394933
+#             1         2025  242444.444444
+# marketing   0          651  192502.304147
+#             1         1359  195639.440765
+# sales       0         1181  194618.120237
+#             1         2418  194207.196030
 
+# One possible recommendation is to strive for a more balanced hiring across departments, 
+# aiming for fewer females in HR and more in Engineering. The next step could be to analyze the candidate 
+# pipeline by department and assess if the proportion of hires matches the proportion of applicants by gender.
 
+# The observed relationship between years of experience and salary raises some concerns. 
+# The company appears to reward experience predominantly at the highest levels, 
+# with less emphasis on mid-level professionals. 
+# This approach might negatively impact retention among mid-level employees. 
+# Adjusting the salary growth to be more linear with years of experience could help 
+# in retaining mid-level professionals more effectively.
