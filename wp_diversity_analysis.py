@@ -254,3 +254,131 @@ print("% explained variance on OOB is", round(metrics.explained_variance_score(t
 
 # % explained variance on OOB is 0.28 and on test set is 0.28
 
+# Understanding the exact meaning of the percentage of variance explained can be challenging, 
+# especially from a product perspective. Additionally, this metric is influenced not only by 
+# the quality of our model but also by the inherent variance in the starting dataset, 
+# making it less informative. The good news is that our model is not overfitting.
+
+# To make this more concrete, we can use a more practical metric: 
+# the proportion of salaries for which the prediction is within 25% of the actual salary. 
+# For example, if an employee's salary is 100K, we consider the model's prediction accurate 
+# if it falls within 25K of the actual salary. 
+# This metric can serve as a form of accuracy for continuous labels.
+
+accuracy_25pct =  ((rf.predict(test.drop('salary', axis=1))/test['salary']-1).abs()<.25).mean()
+print("We are within 25% of the actual salary in ",  accuracy_25pct.round(2)*100, "% of the cases", sep="")
+
+# We are within 25% of the actual salary in 49.0% of the cases
+
+# Nothing shockingly good and we would probably need more variables to predict more accurately. 
+# However, the variable salary had a lot of variability to begin with.
+
+#deciles
+print(np.percentile(train['salary'], np.arange(0, 100, 10)))
+
+# [ 60000.  77000.  97000. 125400. 154000. 182000. 209000. 237000. 272000. 314000.]
+
+# Our model is definitely learning something, so insights will be fairly reliable, 
+# and for sure directionally true.
+
+# #Let's check variable importance
+# feat_importances = pd.Series(rf.feature_importances_, index=train.drop('salary', axis=1).columns)
+# feat_importances.sort_values().plot(kind='barh')
+# plt.savefig('variable_importance.png')
+# # plt.show()
+
+# It looks like the model is essentially just using dept and, to a lesser extent, num_reports, 
+# degree_level, and yrs_experience. All other variables are fairly irrelevant.
+
+#Let's check partial dependence plots of the top 2 variables: dept and yrs_experience, as well as sex
+
+from sklearn.inspection import PartialDependenceDisplay
+
+# dept
+
+# # Define the one-hot encoded department features
+# dept_features = ['dept_HR', 'dept_engineering', 'dept_marketing', 'dept_sales']
+
+# # Plot PDPs for all department features
+# fig, ax = plt.subplots(figsize=(10, 6))
+# PartialDependenceDisplay.from_estimator(
+#     rf,
+#     train.drop('salary', axis=1),
+#     dept_features,
+#     grid_resolution=2,  # Binary features: 0 and 1
+#     ax=ax
+# )
+
+# plt.suptitle('Partial Dependence for Department Features', fontsize=14)
+# plt.tight_layout()
+# plt.savefig('partial_plot_for_dept.png')
+# # plt.show()
+
+# yrs_experience
+
+# Compute and plot PDP for 'yrs_experience'
+# fig, ax = plt.subplots(figsize=(8, 6))
+# PartialDependenceDisplay.from_estimator(
+#     rf,
+#     train.drop('salary', axis=1),
+#     ['yrs_experience'],
+#     grid_resolution=50,
+#     ax=ax
+# )
+
+# plt.title('Partial Dependence Plot for Years of Experience')
+# plt.tight_layout()
+# plt.savefig('partial_plot_for_yrs_of_experience.png')
+# # plt.show()
+
+
+# # Create PDP plot for 'is_male'
+# fig, ax = plt.subplots(figsize=(8, 6))
+# PartialDependenceDisplay.from_estimator(
+#     rf,
+#     train.drop('salary', axis=1),
+#     ['is_male'],
+#     grid_resolution=2,  # only 0 and 1 for binary features
+#     ax=ax
+# )
+
+# plt.title('Partial Dependence Plot for Sex (is_male)')
+# plt.tight_layout()
+# plt.savefig('partial_dependence_plot_for_sex')
+# # plt.show()
+
+# The main driver of salary is undoubtedly the department. 
+# There is a significant difference between HR and Engineering salaries. 
+# Years of experience also plays a role, but its impact is less pronounced 
+# (evident from the smaller y-range compared to the department). 
+# mportantly, experience seems to matter more significantly after reaching a certain number of years. 
+# This implies that salary increases substantially once an employee becomes quite senior, 
+# while in the initial years, experience alone doesn't have a substantial impact.
+#  Gender does not appear to be a significant factor in determining salary.
+
+# Q: Describe the main factors impacting employee salaries. 
+# Do you think the company has been treating all its employees fairly? 
+# What are the next steps you would suggest to the Head of HR?
+
+# Let’s focus on the variable sex here. 
+# We already saw from the partial plot that it doesn’t matter to predict salary. 
+# However, the average salary between males and females is pretty different.
+
+#avg salary males vs females
+
+print(data.groupby('is_male')['salary'].mean())
+
+# is_male
+# 0    171314.518394
+# 1    198876.514445
+# Name: salary, dtype: float64
+
+# This is largely a function of the fact that males are more likely to be working in engineering 
+# and less in HR. Indeed, if we look at sex and dept together, we now get very similar salaries by sex 
+# (as a side note, we are also proving here that RF works extremely well with variables sharing information).
+
+#avg salary males vs females by dept
+print(data.groupby(['dept','is_male'])['salary'].agg({'mean', 'count'}))
+
+
+
